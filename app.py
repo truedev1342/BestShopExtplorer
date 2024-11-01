@@ -50,11 +50,24 @@ class MainWindow(QMainWindow):
         self.ui.actionAbout.triggered.connect(self.show_about_dialog)
         self.ui.action_Print.triggered.connect(self.print_document)
         self.ui.actionOn_Top.triggered.connect(self.toggle_on_top)
+        self.ui.action_Back.triggered.connect(self.go_back)
+        self.ui.action_Forward.triggered.connect(self.go_forward)
 
+        # Connect shortkey actions
         self.shortcut_f1 = QShortcut(QKeySequence(Qt.Key_F1), self)
         self.shortcut_f1.activated.connect(self.show_about_dialog)
+
         self.shortcut_ctrl_p = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_P), self)
         self.shortcut_ctrl_p.activated.connect(self.print_document)
+
+        self.shortcut_ctrl_t = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_T), self)
+        self.shortcut_ctrl_t.activated.connect(self.toggle_on_top)
+
+        self.shortcut_ctrl_back = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Left), self)
+        self.shortcut_ctrl_back.activated.connect(self.go_back)
+
+        self.shortcut_ctrl_forward = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Right), self)
+        self.shortcut_ctrl_forward.activated.connect(self.go_forward)
 
         # Set window to always be on top
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
@@ -70,6 +83,28 @@ class MainWindow(QMainWindow):
         else:
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
         self.show()
+
+    def go_back(self):
+        active_index = self.ui.tabWidget.currentIndex()
+        if active_index == 0:
+            current_view = self.extplorer_web_view
+        elif active_index == 1:
+            current_view = self.google_search_web_view
+        else:
+            return
+        if current_view.history().canGoBack():
+            current_view.back()
+
+    def go_forward(self):
+        active_index = self.ui.tabWidget.currentIndex()
+        if active_index == 0:
+            current_view = self.extplorer_web_view
+        elif active_index == 1:
+            current_view = self.google_search_web_view
+        else:
+            return
+        if current_view.history().canGoForward():
+            current_view.forward()
 
     def print_document(self):
         active_index = self.ui.tabWidget.currentIndex()
