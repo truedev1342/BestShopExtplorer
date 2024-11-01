@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        pixmap = QPixmap(":/splash.png")  # Replace with your splash screen image path
+        pixmap = QPixmap(":/assets/logo.png")  # Replace with your splash screen image path
         splash = StartupWindow(pixmap)
         splash.show()
 
@@ -46,32 +46,17 @@ class MainWindow(QMainWindow):
             print("Google Search tab does not have a layout. Please set a layout in Qt Designer.")
 
         # Connect menu actions
-        self.ui.actionExit.triggered.connect(self.close)
-        self.ui.actionAbout.triggered.connect(self.show_about_dialog)
+        self.ui.action_Exit.triggered.connect(self.close)
+        self.ui.action_About.triggered.connect(self.show_about_dialog)
         self.ui.action_Print.triggered.connect(self.print_document)
-        self.ui.actionOn_Top.triggered.connect(self.toggle_on_top)
+        self.ui.action_On_Top.triggered.connect(self.toggle_on_top)
         self.ui.action_Back.triggered.connect(self.go_back)
         self.ui.action_Forward.triggered.connect(self.go_forward)
-
-        # Connect shortkey actions
-        self.shortcut_f1 = QShortcut(QKeySequence(Qt.Key_F1), self)
-        self.shortcut_f1.activated.connect(self.show_about_dialog)
-
-        self.shortcut_ctrl_p = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_P), self)
-        self.shortcut_ctrl_p.activated.connect(self.print_document)
-
-        self.shortcut_ctrl_t = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_T), self)
-        self.shortcut_ctrl_t.activated.connect(self.toggle_on_top)
-
-        self.shortcut_ctrl_back = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Left), self)
-        self.shortcut_ctrl_back.activated.connect(self.go_back)
-
-        self.shortcut_ctrl_forward = QShortcut(QKeySequence(Qt.CTRL + Qt.Key_Right), self)
-        self.shortcut_ctrl_forward.activated.connect(self.go_forward)
+        self.ui.action_Refresh.triggered.connect(self.refresh_page)
 
         # Set window to always be on top
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
-        self.setWindowIcon(QIcon(":/favicon.ico"))
+        self.setWindowIcon(QIcon(":/assets/favicon.ico"))
         QTimer.singleShot(2000, self.showMaximized)
 
     def show_about_dialog(self):
@@ -105,6 +90,16 @@ class MainWindow(QMainWindow):
             return
         if current_view.history().canGoForward():
             current_view.forward()
+
+    def refresh_page(self):
+        active_index = self.ui.tabWidget.currentIndex()
+        if active_index == 0:
+            current_view = self.extplorer_web_view
+        elif active_index == 1:
+            current_view = self.google_search_web_view
+        else:
+            return
+        current_view.reload()
 
     def print_document(self):
         active_index = self.ui.tabWidget.currentIndex()
