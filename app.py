@@ -5,13 +5,16 @@ from PyQt5.QtGui import QKeySequence, QIcon, QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QShortcut, QSplashScreen
 from PyQt5.QtCore import Qt, QUrl, QTimer
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtSvg import QSvgWidget
 from main_window import Ui_MainWindow
 from print_handler import PrintHandler
-
 import resources_rc
 
+URL_EXTPLORER = "http://localhost/extplorer.html"
+URL_GOOGLE_SEARCH = "http://localhost"
 
-class StartupWindow(QSplashScreen):  # Use QSplashScreen for better look
+
+class StartupWindow(QSplashScreen):
     def __init__(self, pixmap):
         super().__init__(pixmap)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.SplashScreen)  # make the splash screen on top
@@ -24,26 +27,35 @@ class MainWindow(QMainWindow):
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.is_loading = False
 
-        pixmap = QPixmap(":/assets/logo.png")  # Replace with your splash screen image path
+        # Splash screen
+        pixmap = QPixmap(":/assets/logo.png")
         splash = StartupWindow(pixmap)
         splash.show()
 
+        # Original icon path
+        self.refresh_button = QIcon(":/assets/refresh.png")  # Change this to the actual path of original icon
+        self.cancel_icon = QIcon(":/assets/cancel.png")  # Path of the cancel icon
+
+        # Set webview and url
         self.extplorer_web_view = QWebEngineView()
         self.google_search_web_view = QWebEngineView()
+        self.extplorer_web_view.setUrl(QUrl(URL_EXTPLORER))
+        self.google_search_web_view.setUrl(QUrl(URL_GOOGLE_SEARCH))
+        self.setup_tab(self.ui.extplorer_tab, self.extplorer_web_view)
+        self.setup_tab(self.ui.google_search_tab, self.google_search_web_view)
 
-        self.extplorer_web_view.setUrl(QUrl("https://online.statiebi.com/sencha_test"))
-        self.google_search_web_view.setUrl(QUrl("http://localhost"))
+        self.loading_svg_widget = QSvgWidget(":/assets/loading.svg")
+        self.loading_svg_widget.setFixedSize(100, 100)
+        self.loading_svg_widget.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.loading_svg_widget.hide()
 
-        if self.ui.extplorer_tab.layout() is not None:
-            self.ui.extplorer_tab.layout().addWidget(self.extplorer_web_view)
-        else:
-            print("Extplorer tab does not have a layout. Please set a layout in Qt Designer.")
+        self.extplorer_web_view.loadStarted.connect(self.on_load_started)
+        self.extplorer_web_view.loadFinished.connect(self.on_load_finished)
 
-        if self.ui.google_search_tab.layout() is not None:
-            self.ui.google_search_tab.layout().addWidget(self.google_search_web_view)
-        else:
-            print("Google Search tab does not have a layout. Please set a layout in Qt Designer.")
+        self.google_search_web_view.loadStarted.connect(self.on_load_started)
+        self.google_search_web_view.loadFinished.connect(self.on_load_finished)
 
         # Connect menu actions
         self.ui.action_Exit.triggered.connect(self.close)
@@ -59,6 +71,13 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(":/assets/favicon.ico"))
         QTimer.singleShot(2000, self.showMaximized)
 
+    @staticmethod
+    def setup_tab(tab, web_view):
+        if tab.layout() is not None:
+            tab.layout().addWidget(web_view)
+        else:
+            print("Tab does not have a layout. Please set a layout in Qt Designer.")
+
     def show_about_dialog(self):
         QMessageBox.about(self, "About", "Best Shop Extplorer 1.0!")
 
@@ -69,7 +88,7 @@ class MainWindow(QMainWindow):
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
         self.show()
 
-    def go_back(self):
+    def navigate_view(self, direction):
         active_index = self.ui.tabWidget.currentIndex()
         if active_index == 0:
             current_view = self.extplorer_web_view
@@ -77,19 +96,47 @@ class MainWindow(QMainWindow):
             current_view = self.google_search_web_view
         else:
             return
-        if current_view.history().canGoBack():
+        if direction == "back" and current_view.history().canGoBack():
             current_view.back()
+        elif direction == "forward" and current_view.history().canGoForward():
+            current_view.forward()
+
+    def go_back(self):
+        self.navigate_view("back")
 
     def go_forward(self):
-        active_index = self.ui.tabWidget.currentIndex()
-        if active_index == 0:
-            current_view = self.extplorer_web_view
-        elif active_index == 1:
-            current_view = self.google_search_web_view
-        else:
-            return
-        if current_view.history().canGoForward():
-            current_view.forward()
+        self.navigate_view("forward")
+
+    def show_loading_svg(self):
+        current_tab = self.ui.tabWidget.currentWidget()
+        if current_tab.layout() is not None:
+            current_tab.layout().addWidget(self.loading_svg_widget)
+            self.loading_svg_widget.show()
+            tab_rect = current_tab.rect()
+            svg_rect = self.loading_svg_widget.rect()
+            center_x = (tab_rect.width() - svg_rect.width()) // 2
+            center_y = (tab_rect.height() - svg_rect.height()) // 2
+            self.loading_svg_widget.move(center_x, center_y)
+            self.extplorer_web_view.hide()
+            self.google_search_web_view.hide()
+
+    def hide_loading_svg(self):
+        self.loading_svg_widget.hide()
+        current_tab = self.ui.tabWidget.currentWidget()
+        if current_tab.layout() is not None:
+            current_tab.layout().removeWidget(self.loading_svg_widget)
+            self.extplorer_web_view.show()
+            self.google_search_web_view.show()
+
+    def on_load_started(self):
+        self.ui.action_Refresh.setIcon(self.cancel_icon)
+        self.is_loading = True
+        self.show_loading_svg()
+
+    def on_load_finished(self, success):
+        self.ui.action_Refresh.setIcon(self.refresh_button)
+        self.is_loading = False
+        self.hide_loading_svg()
 
     def refresh_page(self):
         active_index = self.ui.tabWidget.currentIndex()
@@ -99,7 +146,10 @@ class MainWindow(QMainWindow):
             current_view = self.google_search_web_view
         else:
             return
-        current_view.reload()
+        if self.is_loading:
+            current_view.stop()
+        else:
+            current_view.reload()
 
     def print_document(self):
         active_index = self.ui.tabWidget.currentIndex()

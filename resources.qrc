@@ -5,5 +5,7 @@
         <file>assets/arrow_right.png</file>
         <file>assets/refresh.png</file>
         <file>assets/logo.png</file>
+        <file>assets/cancel.png</file>
+        <file>assets/loading.svg</file>
     </qresource>
 </RCC>
