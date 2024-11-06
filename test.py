@@ -1,34 +1,34 @@
 import sys
-import webview
-from PyQt5.QtWidgets import QApplication, QTabWidget, QVBoxLayout, QWidget, QPushButton
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QDialog, QPushButton, QVBoxLayout, QApplication, QSplashScreen
+from PyQt5.QtCore import QTimer
 
-class WebViewWidget(QWidget):
-    def __init__(self, url):
-        super().__init__()
-        self.open_webview(url)
 
-    def open_webview(self, url):
-        # Open the webview in a separate thread
-        webview.create_window("Web page", url, width=800, height=600)
-        webview.start()
+class Dialog(QDialog):
+    def __init__(self, parent=None):
+        super(Dialog, self).__init__(parent)
 
-class MainWindow(QTabWidget):
-    def __init__(self):
-        super().__init__()
+        self.b1 = QPushButton('Display screensaver')
+        self.b1.clicked.connect(self.flashSplash)
 
-        # Create and add tabs
-        self.add_tab("Freelancer", "https://www.freelancer.com")
-        self.add_tab("Upwork", "https://www.upwork.com")
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        layout.addWidget(self.b1)
 
-    def add_tab(self, name, url):
-        webview_widget = WebViewWidget(url)
-        self.addTab(webview_widget, name)
+    def flashSplash(self):
+        self.splash = QSplashScreen(QPixmap('assets/splash.png'))
 
-if __name__ == "__main__":
+        # By default, SplashScreen will be in the center of the screen.
+        # You can move it to a specific location if you want:
+        # self.splash.move(10,10)
+
+        self.splash.show()
+
+        # Close SplashScreen after 2 seconds (2000 ms)
+        QTimer.singleShot(2000, self.splash.close)
+
+if __name__ == '__main__':
     app = QApplication(sys.argv)
-    main_window = MainWindow()
-    main_window.setWindowTitle("PyQt Webview in Tab")
-    main_window.resize(800, 600)
-    main_window.show()
-    
-    sys.exit(app.exec())
+    main = Dialog()
+    main.show()
+    sys.exit(app.exec_())

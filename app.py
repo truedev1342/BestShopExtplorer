@@ -1,31 +1,15 @@
 import sys
 
-from PyQt5.QtGui import QIcon, QPixmap, QPainter
-from PyQt5.QtSvg import QSvgRenderer, QSvgWidget
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QSplashScreen, QVBoxLayout, QLabel
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QSplashScreen, QVBoxLayout
 from PyQt5.QtCore import Qt, QUrl, QTimer, QFile
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from main_window import Ui_MainWindow
 from print_handler import PrintHandler
 import resources_rc
 
 URL_EXTPLORER = "http://localhost/extplorer.html"
 URL_GOOGLE_SEARCH = "http://localhost"
-
-
-class StartupWindow(QSplashScreen):
-    def __init__(self, pixmap):
-        super().__init__(pixmap)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.SplashScreen)
-        QTimer.singleShot(2500, lambda: self.close())
-
-
-class AnimatedSvgWidget(QSvgWidget):
-    def __init__(self, svg_file):
-        super().__init__()
-        r = self.renderer()
-        r.setFramesPerSecond(60)
-        r.load(svg_file)
 
 
 class MainWindow(QMainWindow):
@@ -37,9 +21,9 @@ class MainWindow(QMainWindow):
         self.is_loading = False
 
         # Splash screen
-        pixmap = QPixmap(":/assets/logo.png")
-        splash = StartupWindow(pixmap)
-        splash.show()
+        self.splash = QSplashScreen(QPixmap(":/assets/splash.png").scaled(800, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.splash.show()
+        QTimer.singleShot(3000, self.splash.close)
 
         # Original icon path
         self.refresh_button = QIcon(":/assets/refresh.png")
@@ -53,9 +37,7 @@ class MainWindow(QMainWindow):
         self.setup_tab(self.ui.extplorer_tab, self.extplorer_web_view)
         self.setup_tab(self.ui.google_search_tab, self.google_search_web_view)
 
-        # self.loading_svg_widget = AnimatedSvgWidget(":/assets/loading.svg")
         self.loading_svg_widget = QWebEngineView()
-        # self.loading_svg_widget.setUrl(QUrl(":/assets/loading.svg"))
         self.loading_svg_widget.setFixedSize(100, 100)
         self.loading_svg_widget.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.loading_svg_widget.hide()
@@ -128,7 +110,15 @@ class MainWindow(QMainWindow):
                 <html>
                 <head>
                     <style>
-                        body, html {{ margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }}
+                        body, html {{
+                            margin: 0;
+                            padding: 0;
+                            width: 100%;
+                            height: 100%;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                        }}
                         svg {{
                             width: 100%;
                             height: 100%;
