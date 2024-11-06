@@ -1,11 +1,10 @@
 import sys
-import time
 
-from PyQt5.QtGui import QKeySequence, QIcon, QPixmap
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QShortcut, QSplashScreen
-from PyQt5.QtCore import Qt, QUrl, QTimer
+from PyQt5.QtGui import QIcon, QPixmap, QPainter
+from PyQt5.QtSvg import QSvgRenderer, QSvgWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QSplashScreen, QVBoxLayout, QLabel
+from PyQt5.QtCore import Qt, QUrl, QTimer, QFile
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtSvg import QSvgWidget
 from main_window import Ui_MainWindow
 from print_handler import PrintHandler
 import resources_rc
@@ -17,8 +16,16 @@ URL_GOOGLE_SEARCH = "http://localhost"
 class StartupWindow(QSplashScreen):
     def __init__(self, pixmap):
         super().__init__(pixmap)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.SplashScreen)  # make the splash screen on top
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.SplashScreen)
         QTimer.singleShot(2500, lambda: self.close())
+
+
+class AnimatedSvgWidget(QSvgWidget):
+    def __init__(self, svg_file):
+        super().__init__()
+        r = self.renderer()
+        r.setFramesPerSecond(60)
+        r.load(svg_file)
 
 
 class MainWindow(QMainWindow):
@@ -35,8 +42,8 @@ class MainWindow(QMainWindow):
         splash.show()
 
         # Original icon path
-        self.refresh_button = QIcon(":/assets/refresh.png")  # Change this to the actual path of original icon
-        self.cancel_icon = QIcon(":/assets/cancel.png")  # Path of the cancel icon
+        self.refresh_button = QIcon(":/assets/refresh.png")
+        self.cancel_icon = QIcon(":/assets/cancel.png")
 
         # Set webview and url
         self.extplorer_web_view = QWebEngineView()
@@ -46,10 +53,13 @@ class MainWindow(QMainWindow):
         self.setup_tab(self.ui.extplorer_tab, self.extplorer_web_view)
         self.setup_tab(self.ui.google_search_tab, self.google_search_web_view)
 
-        self.loading_svg_widget = QSvgWidget(":/assets/loading.svg")
+        # self.loading_svg_widget = AnimatedSvgWidget(":/assets/loading.svg")
+        self.loading_svg_widget = QWebEngineView()
+        # self.loading_svg_widget.setUrl(QUrl(":/assets/loading.svg"))
         self.loading_svg_widget.setFixedSize(100, 100)
         self.loading_svg_widget.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.loading_svg_widget.hide()
+        self.load_svg_as_data_url(":/assets/loading.svg")
 
         self.extplorer_web_view.loadStarted.connect(self.on_load_started)
         self.extplorer_web_view.loadFinished.connect(self.on_load_finished)
@@ -107,18 +117,42 @@ class MainWindow(QMainWindow):
     def go_forward(self):
         self.navigate_view("forward")
 
+    def load_svg_as_data_url(self, resource_path):
+        file = QFile(resource_path)
+        if not file.open(QFile.ReadOnly):
+            print(f"Cannot open {resource_path}")
+            return
+        svg_content = file.readAll().data().decode("utf-8")
+        file.close()
+        html = f"""
+                <html>
+                <head>
+                    <style>
+                        body, html {{ margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }}
+                        svg {{
+                            width: 100%;
+                            height: 100%;
+                            preserveAspectRatio: xMidYMid meet; /* Adjust as necessary */
+                        }}
+                    </style>
+                </head>
+                <body>
+                    {svg_content}
+                </body>
+                </html>
+                """
+        self.loading_svg_widget.setHtml(html)
+
     def show_loading_svg(self):
         current_tab = self.ui.tabWidget.currentWidget()
-        if current_tab.layout() is not None:
-            current_tab.layout().addWidget(self.loading_svg_widget)
-            self.loading_svg_widget.show()
-            tab_rect = current_tab.rect()
-            svg_rect = self.loading_svg_widget.rect()
-            center_x = (tab_rect.width() - svg_rect.width()) // 2
-            center_y = (tab_rect.height() - svg_rect.height()) // 2
-            self.loading_svg_widget.move(center_x, center_y)
-            self.extplorer_web_view.hide()
-            self.google_search_web_view.hide()
+        if current_tab.layout() is None:
+            layout = QVBoxLayout(current_tab)
+            current_tab.setLayout(layout)
+        layout = current_tab.layout()
+        layout.addWidget(self.loading_svg_widget, alignment=Qt.AlignCenter)
+        self.loading_svg_widget.show()
+        self.extplorer_web_view.hide()
+        self.google_search_web_view.hide()
 
     def hide_loading_svg(self):
         self.loading_svg_widget.hide()
