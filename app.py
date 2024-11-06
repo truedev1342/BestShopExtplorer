@@ -49,6 +49,9 @@ class MainWindow(QMainWindow):
         self.google_search_web_view.loadStarted.connect(self.on_load_started)
         self.google_search_web_view.loadFinished.connect(self.on_load_finished)
 
+        self.extplorer_web_view.urlChanged.connect(self.setBackForwardBtnStatus)
+        self.google_search_web_view.urlChanged.connect(self.setBackForwardBtnStatus)
+
         # Connect menu actions
         self.ui.action_Exit.triggered.connect(self.close)
         self.ui.action_About.triggered.connect(self.show_about_dialog)
@@ -57,6 +60,9 @@ class MainWindow(QMainWindow):
         self.ui.action_Back.triggered.connect(self.go_back)
         self.ui.action_Forward.triggered.connect(self.go_forward)
         self.ui.action_Refresh.triggered.connect(self.refresh_page)
+        self.ui.tabWidget.currentChanged.connect(self.setBackForwardBtnStatus)
+
+        self.setBackForwardBtnStatus()
 
         # Set window to always be on top
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
@@ -98,6 +104,17 @@ class MainWindow(QMainWindow):
 
     def go_forward(self):
         self.navigate_view("forward")
+
+    def setBackForwardBtnStatus(self):
+        active_index = self.ui.tabWidget.currentIndex()
+        if active_index == 0:
+            current_view = self.extplorer_web_view
+        elif active_index == 1:
+            current_view = self.google_search_web_view
+        else:
+            return
+        self.ui.action_Back.setEnabled(current_view.history().canGoBack())
+        self.ui.action_Forward.setEnabled(current_view.history().canGoForward())
 
     def load_svg_as_data_url(self, resource_path):
         file = QFile(resource_path)
