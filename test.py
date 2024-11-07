@@ -1,34 +1,48 @@
 import sys
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QDialog, QPushButton, QVBoxLayout, QApplication, QSplashScreen
-from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 
 
-class Dialog(QDialog):
-    def __init__(self, parent=None):
-        super(Dialog, self).__init__(parent)
+class CustomWebEngineView(QWebEngineView):
+    def __init__(self):
+        super().__init__()
+        self.setPage(CustomWebEnginePage(self))
 
-        self.b1 = QPushButton('Display screensaver')
-        self.b1.clicked.connect(self.flashSplash)
 
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-        layout.addWidget(self.b1)
+class CustomWebEnginePage(QWebEnginePage):
+    def __init__(self, parent):
+        super().__init__(parent)
 
-    def flashSplash(self):
-        self.splash = QSplashScreen(QPixmap('assets/splash.png'))
+    def acceptNavigationRequest(self, url, navigationType, isMainFrame):
+        # Handle navigation requests
+        if navigationType == QWebEnginePage.NavigationTypeOther:
+            # If the request is from a window.open call
+            self.view().goto(url.toString())  # Use the view's goto method
+            return False  # Prevent default handling
+        return super().acceptNavigationRequest(url, navigationType, isMainFrame)
 
-        # By default, SplashScreen will be in the center of the screen.
-        # You can move it to a specific location if you want:
-        # self.splash.move(10,10)
+    def javascriptConsoleMessage(self, level, message, lineNumber, sourceID):
+        print(f"JS message: {message} (Line: {lineNumber}, Source: {sourceID})")
 
-        self.splash.show()
-
-        # Close SplashScreen after 2 seconds (2000 ms)
-        QTimer.singleShot(2000, self.splash.close)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    main = Dialog()
-    main.show()
+    view = CustomWebEngineView()
+
+    # Set the HTML content directly with the button and script.
+    html_content = '''
+    <html>
+    <body>
+        <button onclick="myFunction()">Try it</button>
+        <script>
+        function myFunction() {
+            window.open("https://www.w3schools.com");
+        }
+        </script>
+    </body>
+    </html>
+    '''
+
+    view.setHtml(html_content)  # Use setHtml to set custom HTML content
+    view.show()
     sys.exit(app.exec_())
