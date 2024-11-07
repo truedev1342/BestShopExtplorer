@@ -12,6 +12,14 @@ URL_EXTPLORER = "http://localhost/extplorer.html"
 URL_GOOGLE_SEARCH = "http://localhost"
 
 
+class StartupWindow(QSplashScreen):
+    def __init__(self):
+        super(StartupWindow, self).__init__(QPixmap(":/assets/splash.png").scaled(640, 480, Qt.KeepAspectRatio, Qt.SmoothTransformation), Qt.WindowStaysOnTopHint)
+        self.setEnabled(False)
+        self.show()
+        QTimer.singleShot(3000, self.close)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -21,9 +29,7 @@ class MainWindow(QMainWindow):
         self.is_loading = False
 
         # Splash screen
-        self.splash = QSplashScreen(QPixmap(":/assets/splash.png").scaled(800, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        self.splash.show()
-        QTimer.singleShot(3000, self.splash.close)
+        self.splash = StartupWindow()
 
         # Original icon path
         self.refresh_button = QIcon(":/assets/refresh.png")
