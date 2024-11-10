@@ -1,23 +1,17 @@
 import sys
-
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QSplashScreen, QVBoxLayout
-from PyQt5.QtCore import Qt, QUrl, QTimer, QFile
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QVBoxLayout
+from PyQt5.QtCore import Qt, QUrl, QTimer
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from main_window import Ui_MainWindow
 from print_handler import PrintHandler
+from startup import StartupWindow
+from loadingsvg import LoadingSvgView
+from webview import MyWebEngineView, MyWebEnginePage
 import resources_rc
 
 URL_EXTPLORER = "http://localhost/extplorer.html"
 URL_GOOGLE_SEARCH = "http://localhost"
-
-
-class StartupWindow(QSplashScreen):
-    def __init__(self):
-        super(StartupWindow, self).__init__(QPixmap(":/assets/splash.png").scaled(640, 480, Qt.KeepAspectRatio, Qt.SmoothTransformation), Qt.WindowStaysOnTopHint)
-        self.setEnabled(False)
-        self.show()
-        QTimer.singleShot(3000, self.close)
 
 
 class MainWindow(QMainWindow):
@@ -36,18 +30,16 @@ class MainWindow(QMainWindow):
         self.cancel_icon = QIcon(":/assets/cancel.png")
 
         # Set webview and url
-        self.extplorer_web_view = QWebEngineView()
-        self.google_search_web_view = QWebEngineView()
+        self.extplorer_web_view = MyWebEngineView(self)
+        self.extplorer_web_view.setPage(MyWebEnginePage(self.extplorer_web_view))
+        self.google_search_web_view = MyWebEngineView()
+        self.google_search_web_view.setPage(MyWebEnginePage(self.google_search_web_view))
         self.extplorer_web_view.setUrl(QUrl(URL_EXTPLORER))
         self.google_search_web_view.setUrl(QUrl(URL_GOOGLE_SEARCH))
         self.setup_tab(self.ui.extplorer_tab, self.extplorer_web_view)
         self.setup_tab(self.ui.google_search_tab, self.google_search_web_view)
 
-        self.loading_svg_widget = QWebEngineView()
-        self.loading_svg_widget.setFixedSize(100, 100)
-        self.loading_svg_widget.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.loading_svg_widget.hide()
-        self.load_svg_as_data_url(":/assets/loading.svg")
+        self.loading_svg_widget = LoadingSvgView()
 
         self.extplorer_web_view.loadStarted.connect(self.on_load_started)
         self.extplorer_web_view.loadFinished.connect(self.on_load_finished)
@@ -121,40 +113,6 @@ class MainWindow(QMainWindow):
             return
         self.ui.action_Back.setEnabled(current_view.history().canGoBack())
         self.ui.action_Forward.setEnabled(current_view.history().canGoForward())
-
-    def load_svg_as_data_url(self, resource_path):
-        file = QFile(resource_path)
-        if not file.open(QFile.ReadOnly):
-            print(f"Cannot open {resource_path}")
-            return
-        svg_content = file.readAll().data().decode("utf-8")
-        file.close()
-        html = f"""
-                <html>
-                <head>
-                    <style>
-                        body, html {{
-                            margin: 0;
-                            padding: 0;
-                            width: 100%;
-                            height: 100%;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                        }}
-                        svg {{
-                            width: 100%;
-                            height: 100%;
-                            preserveAspectRatio: xMidYMid meet; /* Adjust as necessary */
-                        }}
-                    </style>
-                </head>
-                <body>
-                    {svg_content}
-                </body>
-                </html>
-                """
-        self.loading_svg_widget.setHtml(html)
 
     def show_loading_svg(self):
         current_tab = self.ui.tabWidget.currentWidget()
