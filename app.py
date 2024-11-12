@@ -1,17 +1,17 @@
 import sys
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QTabBar
 from PyQt5.QtCore import Qt, QUrl, QTimer
-from PyQt5.QtWebEngineWidgets import QWebEngineView
 from main_window import Ui_MainWindow
 from print_handler import PrintHandler
 from startup import StartupWindow
 from loadingsvg import LoadingSvgView
-from webview import MyWebEngineView, MyWebEnginePage
+from webengine import MyWebEngineView, MyWebEnginePage
+from newwindow import NewWindow
 import resources_rc
 
-URL_EXTPLORER = "http://localhost/extplorer.html"
-URL_GOOGLE_SEARCH = "http://localhost"
+URL_EXTPLORER = "https://online.statiebi.com/sencha_test"
+URL_GOOGLE_SEARCH = "https://www.google.com"
 
 
 class MainWindow(QMainWindow):
@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
 
         # Set webview and url
         self.extplorer_web_view = MyWebEngineView(self)
-        self.extplorer_web_view.setPage(MyWebEnginePage(self.extplorer_web_view))
+        self.extplorer_web_view.setPage(MyWebEnginePage(self))
         self.google_search_web_view = MyWebEngineView()
         self.google_search_web_view.setPage(MyWebEnginePage(self.google_search_web_view))
         self.extplorer_web_view.setUrl(QUrl(URL_EXTPLORER))
@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
         self.is_loading = True
         self.show_loading_svg()
 
-    def on_load_finished(self, success):
+    def on_load_finished(self):
         self.ui.action_Refresh.setIcon(self.refresh_button)
         self.is_loading = False
         self.hide_loading_svg()
@@ -155,6 +155,34 @@ class MainWindow(QMainWindow):
             current_view.stop()
         else:
             current_view.reload()
+
+    def open_new_tab(self, url):
+        new_web_view = MyWebEngineView(self)
+        new_web_view.setPage(MyWebEnginePage(new_web_view))
+        new_web_view.setUrl(QUrl(url))
+
+        if self.ui.tabWidget.layout() is None:
+            layout = QVBoxLayout(self.ui.tabWidget)
+            self.ui.tabWidget.setLayout(layout)
+
+        index = self.ui.tabWidget.addTab(new_web_view, url)
+        self.ui.tabWidget.setCurrentWidget(new_web_view)
+
+        close_button = QPushButton()
+        close_button.setIcon(QIcon(":/assets/cancel.png"))
+        close_button.setFlat(True)
+        close_button.setFixedSize(20, 20)
+        close_button.clicked.connect(lambda: self.close_tab(index))
+        tab_bar = self.ui.tabWidget.tabBar()
+        tab_bar.setTabButton(index, QTabBar.ButtonPosition.RightSide, close_button)
+
+    def close_tab(self, index):
+        if index >= 0:
+            self.ui.tabWidget.removeTab(index)
+
+    def open_new_window(self, url):
+        new_window = NewWindow(self, url=url)
+        new_window.showMaximized()
 
     def print_document(self):
         active_index = self.ui.tabWidget.currentIndex()

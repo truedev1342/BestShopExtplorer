@@ -21,15 +21,15 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
         MainWindow.setStyleSheet("QMainWindow {\n"
-"    padding: 0px;\n"
-"    margin: 0px;\n"
-"}")
+                                 "    padding: 0px;\n"
+                                 "    margin: 0px;\n"
+                                 "}")
         MainWindow.setTabShape(QtWidgets.QTabWidget.Triangular)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setStyleSheet("QWidget {\n"
-"    padding: 0px;\n"
-"    margin: 0px;\n"
-"}")
+                                         "    padding: 0px;\n"
+                                         "    margin: 0px;\n"
+                                         "}")
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -39,10 +39,10 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.tabWidget.setFont(font)
         self.tabWidget.setStyleSheet("QTabWidget::pane {\n"
-"    padding: 0px;\n"
-"    margin: 0px;\n"
-"}\n"
-"")
+                                     "    padding: 0px;\n"
+                                     "    margin: 0px;\n"
+                                     "}\n"
+                                     "")
         self.tabWidget.setObjectName("tabWidget")
         self.extplorer_tab = QtWidgets.QWidget()
         self.extplorer_tab.setObjectName("extplorer_tab")
@@ -122,7 +122,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Best Shop Extplorer"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.extplorer_tab), _translate("MainWindow", "ExtPlorer"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.google_search_tab), _translate("MainWindow", "Google Search"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.google_search_tab),
+                                  _translate("MainWindow", "Google Search"))
         self.menuFile.setTitle(_translate("MainWindow", "&File"))
         self.menuAbout.setTitle(_translate("MainWindow", "&Help"))
         self.menu_View.setTitle(_translate("MainWindow", "&View"))
@@ -145,4 +146,6 @@ class Ui_MainWindow(object):
         self.action_Refresh.setText(_translate("MainWindow", "&Refresh"))
         self.action_Refresh.setToolTip(_translate("MainWindow", "Refresh"))
         self.action_Refresh.setShortcut(_translate("MainWindow", "F5"))
+
+
 import resources_rc

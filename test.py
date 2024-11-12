@@ -1,4 +1,4 @@
-import webview
+import webengine
 
 class Api:
     def open_in_new_window(self, url):
