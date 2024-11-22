@@ -1,13 +1,15 @@
 from PyQt5.QtCore import Qt, QFile
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import QWidget, QHBoxLayout
 import resources_rc
 
 
-class LoadingSvgView(QWebEngineView):
+class LoadingSvgView(QWidget):
     def __init__(self):
         super(LoadingSvgView, self).__init__()
-        self.setFixedSize(100, 100)
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.svg_view = QWebEngineView()
+        self.svg_view.setFixedSize(100, 100)
+        self.svg_view.setAttribute(Qt.WA_TransparentForMouseEvents)
         file = QFile(":/assets/loading.svg")
         if not file.open(QFile.ReadOnly):
             print(f"Cannot open loading.svg")
@@ -39,5 +41,7 @@ class LoadingSvgView(QWebEngineView):
                 </body>
                 </html>
                 """
-        self.setHtml(html)
-        self.hide()
+        self.svg_view.setHtml(html)
+        self.layout = QHBoxLayout()
+        self.layout.addWidget(self.svg_view)
+        self.setLayout(self.layout)

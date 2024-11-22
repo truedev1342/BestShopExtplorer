@@ -30,4 +30,5 @@ class MyWebEnginePage(QWebEnginePage):
             elif self.open_mode == 2:
                 self.parent.open_new_window(url.toString())
                 return True
-        return super().acceptNavigationRequest(url, nav_type, is_main_frame)
+        result = super().acceptNavigationRequest(url, nav_type, is_main_frame)
+        return result
